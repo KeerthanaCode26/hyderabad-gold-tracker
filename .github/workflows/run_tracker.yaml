@@ -2,8 +2,8 @@ name: Check Gold Price
 
 on:
   schedule:
-    # Runs every 6 hours automatically
-    - cron: '0 */6 * * *'
+    # Runs every 12 hours automatically
+    - cron: '0 */12 * * *'
   workflow_dispatch: # Allows you to trigger it manually from GitHub anytime
 
 permissions:

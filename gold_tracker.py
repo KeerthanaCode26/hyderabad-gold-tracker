@@ -147,26 +147,35 @@ def main():
             except ValueError:
                 pass
 
+    # Build status line (drop / rise / unchanged / first run)
     if last_price is not None:
         if price_22k < last_price:
-            drop = round(last_price - price_22k, 2)
-            msg = (
-                f"📉 {city_name.capitalize()} Gold Price Dropped!\n"
-                f"Old (22K): ₹{last_price}/g\n"
-                f"New (22K): ₹{price_22k}/g\n"
-                f"Saved: ₹{drop}/g!\n\n"
-                f"24K: ₹{price_24k}/g\n"
-            )
-            if history:
-                msg += f"\nLast {len(history)} days:\n"
-                for date_text, h24, h22 in history:
-                    msg += f"{date_text}: 24K ₹{h24}/g | 22K ₹{h22}/g\n"
-            send_telegram(msg)
-            print("Alert triggered and dispatched successfully.")
+            diff = round(last_price - price_22k, 2)
+            status_line = f"📉 Dropped by ₹{diff}/g (was ₹{last_price}/g)"
+        elif price_22k > last_price:
+            diff = round(price_22k - last_price, 2)
+            status_line = f"📈 Rose by ₹{diff}/g (was ₹{last_price}/g)"
         else:
-            print(f"No drop detected. Current (₹{price_22k}) >= Previous (₹{last_price})")
+            status_line = "➡️ No change since last check"
+        print(status_line)
     else:
+        status_line = "🆕 First run on this machine — baseline saved"
         print(f"First run on this machine. Saved initial reference rate: ₹{price_22k}")
+
+    # Always send a Telegram update, regardless of direction
+    msg = (
+        f"💰 {city_name.capitalize()} Gold Price Update\n\n"
+        f"24K: ₹{price_24k}/g\n"
+        f"22K: ₹{price_22k}/g\n\n"
+        f"{status_line}\n"
+    )
+    if history:
+        msg += f"\nLast {len(history)} days:\n"
+        for date_text, h24, h22 in history:
+            msg += f"{date_text}: 24K ₹{h24}/g | 22K ₹{h22}/g\n"
+
+    send_telegram(msg)
+    print("Telegram update sent.")
 
     # Write current 22K price state to historical text baseline tracking file
     with open(PRICE_FILE, "w") as f:
